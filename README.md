@@ -28,11 +28,20 @@ adding the Flathub remote, which was already configured):
   cleanly (Vulkan warnings in the log are just this headless environment
   lacking a real GPU driver for rendering — irrelevant on your actual
   desktop with a display attached).
+- **Proton VPN** (`com.protonvpn.www`) — has a genuinely free tier (no
+  payment info, a handful of server locations, one device), so this is
+  installed and verified (`4.18.1`, clean launch, VPN backend
+  initialized in 7ms) but **not connected to anything** — there's no
+  account yet. **You still need to do this part**: create a free
+  account at [protonvpn.com](https://protonvpn.com) (email + password,
+  no card required for the free tier), then open the app and log in.
+  I can't create that account for you.
 
-Launch either from your application menu, or:
+Launch any of these from your application menu, or:
 ```
 flatpak run org.keepassxc.KeePassXC
 flatpak run com.belmoussaoui.Authenticator
+flatpak run com.protonvpn.www
 ```
 
 ## Found a real gap: DNS is unencrypted
@@ -60,23 +69,31 @@ DNS providers alongside Cloudflare/Mullvad). Swap the IPs for
 Cloudflare (`1.1.1.1#cloudflare-dns.com`) or Mullvad's resolver if you
 prefer a different provider — the mechanism is the same either way.
 
-## Deliberately not done without asking first
+## Follow-up: three things done, with one manual step each
 
-- **Browser (uBlock Origin, etc.)**: your real Firefox profile already
-  has Betterfox's `user.js` applied (see
-  [firefox-customization-notes](https://github.com/abdussamikhan1999-stack/firefox-customization-notes)),
-  which covers a lot of the tracking-protection ground already
-  (`browser.contentblocking.category = "strict"`, etc.). Installing an
-  extension into your *live, currently-running* browser is a further step
-  I didn't take unprompted — say the word and I'll do it the same
-  verified way as the rest of that profile setup.
-- **Have I Been Pwned check**: this needs your email address sent to a
-  third-party service. I won't do that without you explicitly asking —
-  tell me which email(s) to check and I'll look them up.
-- **VPN client**: no VPN provider account exists to configure one against.
-  If you have (or want) a specific provider (Mullvad/ProtonVPN/IVPN are
-  the ones cyberpunk-privacy-notes names), tell me which and I'll set up
-  the client.
+- **uBlock Origin** — downloaded the real, current XPI (v1.74.0) directly
+  from Mozilla's official add-ons distribution
+  (`addons.mozilla.org/firefox/downloads/latest/ublock-origin/`, not a
+  third-party mirror), confirmed its extension ID
+  (`uBlock0@raymondhill.net`) from the manifest, and placed it at
+  `~/.config/mozilla/firefox/9n2sg4hn.default-release/extensions/uBlock0@raymondhill.net.xpi`.
+  Same non-disruptive approach as the rest of the Firefox profile setup —
+  it doesn't touch your currently-running session at all; Firefox
+  installs it automatically the next time you restart (whenever that is,
+  on your own schedule). Check `about:addons` afterward to confirm it's
+  there and enabled.
+- **Have I Been Pwned check** — blocked by a safety classifier here (sending
+  your email to a third-party service, even one you asked for, needs you
+  to run it directly rather than me doing it silently). Run this
+  yourself via `!`:
+  ```bash
+  curl -sSL -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" \
+    "https://haveibeenpwned.com/unifiedsearch/YOUR_EMAIL_HERE"
+  ```
+  (That's HIBP's public web-search endpoint, not the paid API.)
+- **Proton VPN** — installed and verified working (see above); you need
+  to create the free account yourself and log in — that's the one part
+  requiring you specifically.
 
 ## What each piece is actually for, per the source notes
 
