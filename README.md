@@ -81,7 +81,10 @@ prefer a different provider — the mechanism is the same either way.
   it doesn't touch your currently-running session at all; Firefox
   installs it automatically the next time you restart (whenever that is,
   on your own schedule). Check `about:addons` afterward to confirm it's
-  there and enabled.
+  there and enabled. Double-checked this is the real thing, not a fluke:
+  cross-referenced against Mozilla's own public AMO API
+  (`addons.mozilla.org/api/v5/addons/addon/ublock-origin/`) — version and
+  extension ID both matched exactly.
 - **Have I Been Pwned check** — blocked by a safety classifier here (sending
   your email to a third-party service, even one you asked for, needs you
   to run it directly rather than me doing it silently). Run this
@@ -94,6 +97,55 @@ prefer a different provider — the mechanism is the same either way.
 - **Proton VPN** — installed and verified working (see above); you need
   to create the free account yourself and log in — that's the one part
   requiring you specifically.
+
+## Round 2: a security audit turned up the biggest finding yet
+
+- **257 pending security updates**, including `systemd`, `sudo`,
+  `webkitgtk`, and `xorg-x11-server-Xwayland` — checked via
+  `dnf check-update --security` (read-only, no changes made). This is a
+  bigger gap than the DNS one above: an unpatched `sudo` or `systemd` is
+  a much more direct path to real compromise than plaintext DNS. Needs
+  your password to fix:
+  ```bash
+  sudo dnf upgrade --security -y   # security patches only
+  # or, simpler and just as standard:
+  sudo dnf upgrade -y              # everything, security + regular
+  ```
+  A reboot afterward is worth doing given `systemd` itself is in the list.
+
+- **No automatic security updates configured** — `dnf-automatic.timer`
+  is not installed/enabled at all, which is presumably *why* 257 updates
+  piled up unnoticed. Worth turning on once you've done the manual
+  catch-up above, so this doesn't happen silently again:
+  ```bash
+  sudo dnf install -y dnf-automatic
+  sudo sed -i 's/^apply_updates = no/apply_updates = yes/' /etc/dnf/automatic.conf
+  sudo systemctl enable --now dnf-automatic.timer
+  ```
+
+- **Listening-port audit** (`ss -tlnp`, read-only): everything checked
+  out as either localhost-only and expected (CUPS printing on 631,
+  systemd-resolved's own stub resolver on 53, LLMNR on 5355) or
+  identified and confirmed benign: something was listening on
+  `0.0.0.0:27500` (all interfaces, not just localhost — the one entry
+  worth actually chasing down rather than assuming). Traced it via its
+  cgroup to `passim.service` — a legitimate, signed Fedora system
+  package (`passim-0.1.10-3.fc44`, installed the same day as the OS, not
+  something injected later): a local peer-to-peer caching daemon for
+  package/firmware metadata, by the same maintainer as `fwupd`
+  (upstream: [github.com/hughsie/passim](https://github.com/hughsie/passim)).
+  Listens on all interfaces by design (to serve other machines on your
+  LAN), which is why it shows up this way — not a compromise, just worth
+  knowing it's there and what it's for.
+
+- **Second unhardened browser found**: Google Chrome is installed
+  alongside Firefox (flatpak, `com.google.Chrome`, plus GNOME Web/
+  Epiphany also present) — neither has had any of the Firefox hardening
+  applied. If you actually use Chrome day-to-day, it's worth either
+  applying equivalent hardening there (uBlock Origin from the Chrome Web
+  Store, `chrome://settings` privacy tab) or consolidating to Firefox as
+  your one actively-used browser — flagged, not fixed, since which
+  browser you actually want to keep using is your call.
 
 ## What each piece is actually for, per the source notes
 
